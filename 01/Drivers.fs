@@ -1,10 +1,12 @@
 module AdventOfCode.Drivers
 
-let parseInput (inputLines: string[]) = inputLines |> Array.map int
+open FSharpPlus
+
+let parseInput (input: string[]) = input |> map int
 
 let isIncrease (n1, n2) = n1 < n2
 
 let part1 (input: string[]) =
-    input |> Array.pairwise |> Array.filter isIncrease |> Array.length
+    input |> Seq.pairwise |> filter isIncrease |> length
 
 let part2 input = 2000

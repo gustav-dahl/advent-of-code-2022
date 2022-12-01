@@ -17,3 +17,9 @@ let print format value result =
 
     Console.ForegroundColor <- color
     printfn format value
+
+let isSuccess result expected =
+    if result = expected then
+        Success
+    else
+        Fail
