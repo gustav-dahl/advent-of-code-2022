@@ -1,12 +1,29 @@
 module AdventOfCode.Drivers
 
-open FSharpPlus
+let split (separators: string) (x: string) = x.Split(separators)
 
-let parseInput (input: string[]) = input |> map int
-
-let isIncrease (n1, n2) = n1 < n2
+let parseInput (input: string[]) =
+    input
+    |> String.concat "|"
+    |> split "||"
+    |> Seq.map (split "|")
+    |> Seq.map (fun x -> x |> Seq.map int)
 
 let part1 (input: string[]) =
-    input |> Seq.pairwise |> filter isIncrease |> length
+    let elfs = input |> parseInput
+    let calories = elfs |> Seq.map Seq.sum
+    let maxCalories = calories |> Seq.max
 
-let part2 input = 2000
+    maxCalories
+
+let part2 input =
+    let elfs = input |> parseInput
+    let calories = elfs |> Seq.map Seq.sum
+
+    let maxCalories =
+        calories
+        |> Seq.sortDescending
+        |> Seq.take 3
+        |> Seq.sum
+
+    maxCalories

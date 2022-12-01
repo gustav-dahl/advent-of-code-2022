@@ -4,8 +4,8 @@ open AdventOfCode.Input
 open AdventOfCode.Drivers
 open AdventOfCode.Outout
 
-let expected1 = 7
-let expected2 = 1000
+let expected1 = 24000 
+let expected2 = 45000
 
 // --------------------------------------------
 // Test - Part 1
