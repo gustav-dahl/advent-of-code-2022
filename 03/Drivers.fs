@@ -1,104 +1,60 @@
 module AdventOfCode.Drivers
 
 open AdventOfCode.Utilities
+open FSharpPlus
+open System
 
-type Play =
-    | Rock
-    | Paper
-    | Scissors
+let length x = String.length x
+let halfLength x = (length x) / 2
 
-
-let parsePlay x =
-    match x with
-    | "A" -> Rock
-    | "B" -> Paper
-    | "C" -> Scissors
-    | "X" -> Rock
-    | "Y" -> Paper
-    | "Z" -> Scissors
-
-type Result =
-    | Win
-    | Loss
-    | Draw
-
-let parseResult x =
-    match x with
-    | "X" -> Loss
-    | "Y" -> Draw
-    | "Z" -> Win
+let asSet (s1, s2) = (Set.ofList s1, Set.ofList s2)
+let inBoth (s1, s2) = Set.intersect s1 s2
 
 
-let calculatePlay round =
-    match round with
-    | (x, Draw) -> (x, x)
-    | (Rock, Win) -> (Rock, Paper)
-    | (Paper, Win) -> (Paper, Scissors)
-    | (Scissors, Win) -> (Scissors, Rock)
-    | (Rock, Loss) -> (Rock, Scissors)
-    | (Paper, Loss) -> (Paper, Rock)
-    | (Scissors, Loss) -> (Scissors, Paper)
+let calculateScore c =
+    match c with
+    | c when Char.IsLower(c) -> int c - 112 + 16
+    | c -> int c - 76 + 38
 
 
-let isWin (x, y) =
-    match (y, x) with
-    // Rock defeats Scissors
-    | (Rock, Scissors) -> Win
-    // Paper defeats Rock.
-    | (Paper, Rock) -> Win
-    // Scissors defeats Paper
-    | (Scissors, Paper) -> Win
-    // If both players choose the same shape, the round instead ends in a draw.
-    | (x, y) -> if x = y then Draw else Loss
-
-let playScore (_, x) =
-    match x with
-    | Rock -> 1
-    | Paper -> 2
-    | Scissors -> 3
-
-let outcomeScore x =
-    match x with
-    | Win -> 6
-    | Draw -> 3
-    | Loss -> 0
-
-let singleRoundScore round =
-    (isWin round |> outcomeScore) + (playScore round)
-
+let parseItems rows =
+    rows
+    |> Array.map (fun items -> (items, halfLength items))
+    |> Array.map (fun (items, l) -> (items[.. (l - 1)], items[l..]))
+    |> Array.map (fun (s1, s2) -> (String.toList s1, String.toList s2))
+    |> Array.map asSet
+    |> Array.map inBoth
+    |> Array.map Set.toList
+    |> Array.toList
 
 // ----------------------------------------------------------------
 // Part 1
 
-let parseInput1 (input: string[]) =
-    input
-    |> Array.map (split " ")
-    |> Array.map (fun row -> (parsePlay row[0], parsePlay row[1]))
-
-let expected1 = 15
+let expected1 = 157
 
 let part1 (input: string[]) =
-    let score = input |> parseInput1 |> Array.map singleRoundScore |> Seq.sum
+    let score = input |> parseItems |> flattenList |> List.map calculateScore |> List.sum
 
     score
 
 // ----------------------------------------------------------------
 // Part 2
 
-let parseInput2 (input: string[]) =
-    input
-    |> Array.map (split " ")
-    |> Array.map (fun row -> (parsePlay row[0], parseResult row[1]))
+let expected2 = 70
 
-let expected2 = 12
+let parseGroup x =
+    x |> Array.map Set.ofList |> Set.intersectMany |> Set.toArray
+
 
 let part2 input =
 
-    let score =
-        input
-        |> parseInput2
-        |> Array.map calculatePlay
-        |> Array.map singleRoundScore
-        |> Seq.sum
+    let groups = input |> Array.map Seq.toList |> Array.splitInto (input.Length / 3)
 
-    score 
+    let score =
+        groups
+        |> Array.map parseGroup
+        |> flattenArray
+        |> Array.map calculateScore
+        |> Array.sum
+
+    score
