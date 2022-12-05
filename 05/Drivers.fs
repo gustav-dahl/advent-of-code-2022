@@ -14,6 +14,8 @@ let parseInstruction x =
 
     (int result[1], int result[3] - 1, int result[5] - 1)
 
+let removeEmptyValues x = x |> List.filter (fun y -> y <> ' ')
+
 let applyInstruction9000 (x: list<list<char>>) (amount, src, dst) =
 
     let a = x[src] |> List.rev |> List.take amount
@@ -53,7 +55,7 @@ let parseInput (input: string[]) =
         |> List.map parseState
         |> List.map List.ofSeq
         |> List.transpose
-        |> List.map (fun x -> x |> List.filter (fun y -> y <> ' '))
+        |> List.map removeEmptyValues
         |> List.map List.rev
 
     //printList state
