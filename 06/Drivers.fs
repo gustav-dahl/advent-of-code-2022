@@ -1,39 +1,26 @@
 module AdventOfCode.Drivers
 
-open AdventOfCode.Utilities
+let processSignal count signals = 
+    let result =
+        signals
+        |> Array.head
+        |> Seq.toList
+        |> Seq.windowed count
+        |> Seq.map Set.ofSeq
+        |> Seq.findIndex (fun x -> x.Count = count)
+
+    result + count
 
 // ----------------------------------------------------------------
 // Part 1
 
 let expected1 = 7
 
-let part1 (input: string[]) =
-    let count = 4
-
-    let result =
-        input
-        |> Array.head
-        |> Seq.toList
-        |> Seq.windowed count
-        |> Seq.map Set.ofSeq
-        |> Seq.findIndex (fun x -> x.Count = count)
-
-    result + count
+let part1 (input: string[]) = input |> processSignal 4
 
 // ----------------------------------------------------------------
 // Part 2
 
 let expected2 = 19
 
-let part2 input =
-    let count = 14
-
-    let result =
-        input
-        |> Array.head
-        |> Seq.toList
-        |> Seq.windowed count
-        |> Seq.map Set.ofSeq
-        |> Seq.findIndex (fun x -> x.Count = count)
-
-    result + count
+let part2 input = input |> processSignal 14
