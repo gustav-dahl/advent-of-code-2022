@@ -1,34 +1,11 @@
-// Thanks to @jovaneyck for helping me in finding the solution to Day 7
+
+// Thanks to @jovaneyck for helping me in finding and understanding the solution to Day 7
 // https://github.com/jovaneyck/advent-of-code-2022
-open System.IO
+module AdventOfCode.Drivers
 
-let loadTestInput =
-    let filename = Path.Combine(__SOURCE_DIRECTORY__, $"data/example.txt")
-
-    File.ReadAllLines(filename)
-
-let loadInput =
-    let filename = Path.Combine(__SOURCE_DIRECTORY__, $"data/input.txt")
-
-    File.ReadAllLines(filename)
-
-let split (separators: string) (x: string) = x.Split(separators) |> List.ofArray
-
-let parseInput (input: string[]) = input |> List.ofArray
-
-type Command = { Name: string; Args: string }
-
-type Dir = { Name: string }
-
-type File = { Name: string; Size: int }
-
-type Output =
-    | Dir of Dir
-    | File of File
-
-type Line =
-    | Command of Command
-    | Output of Output
+open System.Collections.Generic
+open AdventOfCode.Types
+open AdventOfCode.Utilities
 
 let parseLine line =
     let parts = line |> split " "
@@ -60,7 +37,6 @@ type State =
 let initialState = { CurrentPath = []; Tree = Map.empty }
 
 
-let dict = new System.Collections.Generic.Dictionary<string list, int64>()
 
 let processLine (state: State) line =
     let result =
@@ -75,6 +51,8 @@ let processLine (state: State) line =
         | _ -> state
 
     result
+
+let dict = new Dictionary<string list, int>()
 
 let rec calculateSize tree path =
     let exists, size = dict.TryGetValue path
@@ -102,25 +80,48 @@ and sizeOf tree path node =
             dict.TryAdd(path, s) |> ignore
             s
 
-let input = loadInput |> parseInput
-let lines = input |> List.map (fun x -> parseLine x)
-let state = lines |> List.fold processLine initialState
-let paths = state.Tree |> Map.keys |> Seq.toList
+// ----------------------------------------------------------------
+// Part 1
 
-dict.Clear()
+let expected1 = 95437
 
-let sizes = paths |> List.map (fun dir -> dir, dir |> calculateSize state.Tree)
+let part1 (input: string[]) =
 
-let sumOfLargeFolders =
-    sizes |> List.filter (fun (_, s) -> s <= 100000L) |> Seq.sumBy snd
+    let lines = input |> parseInput |> List.map (fun x -> parseLine x)
+    let state = lines |> List.fold processLine initialState
+    let paths = state.Tree |> Map.keys |> Seq.toList
 
-printfn "%A" sumOfLargeFolders
+    dict.Clear()
 
-let totalDiskSpace = 70000000L
-let unusedDiskSpace = totalDiskSpace - (sizes |> List.find (fun (p, _) -> p = [ "/" ]) |> snd)
-let diskSpaceToFree = 30000000L - unusedDiskSpace
+    let sizes = paths |> List.map (fun dir -> dir, dir |> calculateSize state.Tree)
 
-let result2 =
-    sizes |> List.sortBy snd |> List.find (fun (_, size) -> size >= diskSpaceToFree)
+    let result = sizes |> List.filter (fun (_, s) -> s <= 100000) |> Seq.sumBy snd
 
-printfn "%A" result2
+    result
+// ----------------------------------------------------------------
+// Part 2
+
+let expected2 = 24933642
+
+let part2 input =
+
+    let lines = input |> parseInput |> List.map (fun x -> parseLine x)
+    let state = lines |> List.fold processLine initialState
+    let paths = state.Tree |> Map.keys |> Seq.toList
+
+    dict.Clear()
+
+    let sizes = paths |> List.map (fun dir -> dir, dir |> calculateSize state.Tree)
+
+    let totalDiskSpace = 70000000
+    let requiredDiskSpace = 30000000
+
+    let unusedDiskSpace =
+        totalDiskSpace - (sizes |> List.find (fun (p, _) -> p = [ "/" ]) |> snd)
+
+    let diskSpaceToFree = requiredDiskSpace - unusedDiskSpace
+
+    let result =
+        sizes |> List.sortBy snd |> List.find (fun (_, size) -> size >= diskSpaceToFree) |> snd
+
+    result
