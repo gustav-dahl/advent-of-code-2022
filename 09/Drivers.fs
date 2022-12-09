@@ -1,87 +1,101 @@
-
 module AdventOfCode.Drivers
 
 open AdventOfCode.Utilities
 
-let parseInput (input: string[]) =
-    input
-    |> Array.map Array.ofSeq
-    |> Array.map (fun x -> x |> Array.map (string >> int))
-    |> toArray2D
+type Direction = string
+type Position = int * int
 
-let find func (x, y) (matrix: int[,]) =
+let parse (lines: string[]) =
+    lines |> List.ofArray |> List.map (split " ")
 
-    let row = matrix[x, *]
-    let left = row[..y] |> func
-    let right = row[y..] |> Array.rev |> func
+let asMovements (lines: list<list<string>>) : list<Direction> =
 
-    let column = matrix[*, y]
-    let up = column[..x] |> func
-    let down = column[x..] |> Array.rev |> func
+    let parse (line: list<string>) =
+        let direction = line[0]
+        let count = int line[1]
+        let moves = List.replicate count direction
+        moves
 
-    (left, right, up, down)
+    lines |> List.map parse |> flatten
 
+let move direction (x, y) =
+
+    let position =
+        match direction with
+        | "L" -> (x - 1, y)
+        | "R" -> (x + 1, y)
+        | "U" -> (x, y + 1)
+        | "D" -> (x, y - 1)
+
+    position
+
+let follow (x2, y2) (x1, y1) : Position =
+
+    let dx = x2 - x1
+    let dy = y2 - y1
+
+    let position =
+        if abs dx <= 1 && abs dy <= 1 then
+            (x1, y1)
+        else
+            (x1 + (clamp dx (-1, 1)), y1 + (clamp dy (-1, 1)))
+
+    position
+
+let simulate (direction: Direction) (rope: list<Position>) i =
+
+    let position =
+        if i = 0 then
+            rope[0] |> move direction
+        else
+            rope[i] |> follow rope[i - 1]
+
+    let result = rope |> replace i position
+
+    result
+
+let updateKnots (history: list<list<Position>>) (direction: Direction) =
+
+    let rope = history |> List.last
+    let knots = [ 0 .. rope.Length - 1 ]
+    let result = knots |> List.fold (simulate direction) rope
+
+    history @ [ result ]
+
+let updateRope count (moves: list<Direction>) =
+
+    let knots: list<Position> = List.replicate count (0, 0)
+    let history = [ knots ]
+    let result = moves |> List.fold updateKnots history
+
+    result
 
 // ----------------------------------------------------------------
 // Part 1
 
-let visible (x: int[]) =
-    let y = x |> Array.rev
-    let head = y |> Array.head
-    let tail = y |> Array.tail
-
-    let isVisible = head > (tail |> Array.max)
-    isVisible
-
-let expected1 = 21
+let expected1 = 13
 
 let part1 (input: string[]) =
 
-    let matrix = input |> parseInput
-    let range = Array2D.create (matrix.GetLength(0) - 2) (matrix.GetLength(1) - 2) 0
+    let movements = parse input |> asMovements
 
-    let visibleTrees =
-        range
-        |> Array2D.mapi (fun x y _ -> find visible (x + 1, y + 1) matrix)
-        |> flatten
-        |> Seq.map (fun (left, right, up, down) -> left || right || up || down)
+    let ropeLength = 2
+    let history = updateRope ropeLength movements
 
-    let numberOfEdgeTrees = matrix.GetLength(0) * 4 - 4
-    let numberOfVisibleTrees =
-        (visibleTrees |> Seq.filter (fun x -> x = true) |> Seq.length) 
-
-    let result = numberOfEdgeTrees + numberOfVisibleTrees
+    let result = history |> last |> distinct |> Set.count
     result
 
 // ----------------------------------------------------------------
 // Part 2
 
-let viewingDistance (x: int[]) =
-    let y = x |> Array.rev
-    let head = y |> Array.head
-    let tail = y |> Array.tail
-
-    let distance =
-        if tail |> Array.max < head then
-            tail.Length
-        else
-            (tail |> Array.takeWhile (fun i -> i < head) |> Array.length) + 1
-    distance
-
-let expected2 = 8
+let expected2 = 1
 
 let part2 input =
-    
-    let matrix = input |> parseInput
-    let range = Array2D.create (matrix.GetLength(0) - 2) (matrix.GetLength(1) - 2) 0
 
-    let viewingDistances =
-        range
-        |> Array2D.mapi (fun x y _ -> find viewingDistance (x + 1, y + 1) matrix)
-        |> flatten
-        |> Seq.map (fun (left, right, up, down) -> left * right * up * down)
+    let movements = parse input |> asMovements
 
-    let result = viewingDistances |> Seq.max
+    let ropeLength = 10
+    let history = movements |> updateRope ropeLength
+
+    let result = history |> last |> distinct |> Set.count
     result
-
-

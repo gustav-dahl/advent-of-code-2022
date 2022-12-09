@@ -6,12 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!--<Compile Include="Utilities.fs" />
+    <Compile Include="Utilities.fs" />
     <Compile Include="Input.fs" />
     <Compile Include="Drivers.fs" />
     <Compile Include="Output.fs" />
-    <Compile Include="Program.fs" />-->
-    <Compile Include="Main.fsx" />
+    <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
