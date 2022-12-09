@@ -14,14 +14,19 @@ let loadInput =
 // Utilities
 let split (separators: string) (x: string) = x.Split(separators) |> List.ofArray
 
+let clamp (x: int) (a, b) = System.Math.Clamp(x, a, b)
+
+let replace index sub =
+    List.mapi (fun i x -> if i = index then sub else x)
+
 let flatten x = x |> List.reduce List.append
 
-type Move = string
+type Direction = string
 type Position = int * int
 
 // Part 1
 
-let parseMove (line: list<string>) : list<Move> =
+let parseMovements (line: list<string>) : list<Direction> =
     let [ direction; steps ] = line
     let count = int steps
     let moves = List.replicate count direction
@@ -31,10 +36,10 @@ let parseMove (line: list<string>) : list<Move> =
 let parseInput (lines: string[]) =
     lines |> List.ofArray |> List.map (split " ")
 
-let calculateHeadPosition (x, y) move =
+let move direction (x, y) =
 
     let position =
-        match move with
+        match direction with
         | "L" -> (x - 1, y)
         | "R" -> (x + 1, y)
         | "U" -> (x, y + 1)
@@ -42,31 +47,55 @@ let calculateHeadPosition (x, y) move =
 
     (Position position)
 
-let calculateTailPosition newHead oldHead tail =
-    let (x1, y1) = newHead
-    let (x2, y2) = tail
+let follow (x2, y2) (x1, y1) : Position =
 
-    let distance = List.max [ abs (x2 - x1); abs (y2 - y1) ]
+    let dx = x2 - x1
+    let dy = y2 - y1
 
-    if distance > 1 then oldHead else tail
+    let position =
+        if abs dx <= 1 && abs dy <= 1 then
+            (x1, y1)
+        else
+            (x1 + (clamp dx (-1, 1)), y1 + (clamp dy (-1, 1)))
 
-let initialState = [ ((0, 0), (0, 0)) ]
+    position
 
-let processMoves (moves: list<Move>) =
 
-    let processMove (positions: list<Position * Position>) (move: Move) =
-        let (head, tail) = positions |> List.last
+let processKnot (direction: Direction) (knots: list<Position>) i =
 
-        let newHead = calculateHeadPosition head move
-        let newTail = calculateTailPosition newHead head tail
+    let position =
+        if i = 0 then
+            knots[0] |> move direction
+        else
+            knots[i] |> follow knots[i - 1]
 
-        positions @ [ (newHead, newTail) ]
+    let result = knots |> replace i position
 
-    let result = List.fold processMove initialState moves
     result
 
-let input = loadInput |> parseInput |> List.map parseMove
-let foo = input |> flatten |> processMoves |> List.map (fun (_, tail) -> tail) |> Set.ofList
-foo.Count
+let processKnots count (history: list<list<Position>>) (move: Direction) =
 
-//printfn "%A" asd
+    let range = [ 0 .. count - 1 ]
+    let knots = history |> List.last
+    let result = List.fold (processKnot move) knots range
+
+    history @ [ result ]
+
+let processMoves count (moves: list<Direction>) =
+
+    let knots: list<Position> = List.replicate count (0, 0)
+    let history = [ knots ]
+    let result = List.fold (processKnots count) history moves
+
+    result
+
+let input = loadInput |> parseInput |> List.map parseMovements
+
+let foo =
+    input
+    |> flatten
+    |> processMoves 10
+    |> List.map List.last
+    |> Set.ofList
+
+foo.Count
