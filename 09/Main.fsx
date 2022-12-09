@@ -16,6 +16,10 @@ let split (separators: string) (x: string) = x.Split(separators) |> List.ofArray
 
 let clamp (x: int) (a, b) = System.Math.Clamp(x, a, b)
 
+let distinct x = x |> Set.ofList
+
+let tail x = x |> List.map List.last
+
 let replace index sub =
     List.mapi (fun i x -> if i = index then sub else x)
 
@@ -27,8 +31,8 @@ type Position = int * int
 // Part 1
 
 let parseMovements (line: list<string>) : list<Direction> =
-    let [ direction; steps ] = line
-    let count = int steps
+    let direction = line[0]
+    let count = int line[1]
     let moves = List.replicate count direction
     moves
 
@@ -45,7 +49,8 @@ let move direction (x, y) =
         | "U" -> (x, y + 1)
         | "D" -> (x, y - 1)
 
-    (Position position)
+    position
+
 
 let follow (x2, y2) (x1, y1) : Position =
 
@@ -61,7 +66,7 @@ let follow (x2, y2) (x1, y1) : Position =
     position
 
 
-let processKnot (direction: Direction) (knots: list<Position>) i =
+let updateKnot (direction: Direction) (knots: list<Position>) i =
 
     let position =
         if i = 0 then
@@ -73,29 +78,25 @@ let processKnot (direction: Direction) (knots: list<Position>) i =
 
     result
 
-let processKnots count (history: list<list<Position>>) (move: Direction) =
+let updateKnots count (history: list<list<Position>>) (direction: Direction) =
 
     let range = [ 0 .. count - 1 ]
     let knots = history |> List.last
-    let result = List.fold (processKnot move) knots range
+    let result = List.fold (updateKnot direction) knots range
 
     history @ [ result ]
 
-let processMoves count (moves: list<Direction>) =
+let processMovement count (moves: list<Direction>) =
 
     let knots: list<Position> = List.replicate count (0, 0)
     let history = [ knots ]
-    let result = List.fold (processKnots count) history moves
+    let result = List.fold (updateKnots count) history moves
 
     result
 
-let input = loadInput |> parseInput |> List.map parseMovements
+let input = loadInput |> parseInput
+let movements = input |> List.map parseMovements |> flatten
 
-let foo =
-    input
-    |> flatten
-    |> processMoves 10
-    |> List.map List.last
-    |> Set.ofList
+let ropeLength = 10
 
-foo.Count
+let result = movements |> processMovement ropeLength |> tail |> distinct |> Set.count
