@@ -15,7 +15,7 @@ let asInstructions (lines: list<list<string>>) =
     lines |> List.map parse |> flatten
 
 let updateState state v =
-    let x: int = state |> List.last
+    let x = state |> List.last
     state @ [ x + v ]
 
 let executeWith initialState list = 
