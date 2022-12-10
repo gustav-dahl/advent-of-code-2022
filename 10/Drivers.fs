@@ -14,10 +14,14 @@ let asInstructions (lines: list<list<string>>) =
 
     lines |> List.map parse |> flatten
 
-let updateState x v =
-    let oldX: int = x |> List.last
-    let newX: int = oldX + v
-    x @ [ newX ]
+let updateState state v =
+    let x: int = state |> List.last
+    state @ [ x + v ]
+
+let executeWith initialState list = 
+        list
+        |> List.fold updateState initialState
+        |> List.mapi (fun i x -> (i, x))
 
 let signalStrength (cycles: list<int * int>) i =
     let (_, x) = cycles[i]
@@ -51,12 +55,9 @@ let part1 (input: string[]) =
 
     let instructions = parse input |> asInstructions
 
-    let cycles =
-        instructions
-        |> List.fold updateState initialState
-        |> List.mapi (fun i x -> (i, x))
+    let cycles = instructions |> executeWith initialState
 
-    let checkpoints = [ 20 ] @ [ 60..40 .. cycles.Length ] |> List.map (fun i -> i - 1)
+    let checkpoints = [ 20 ] @ [ 60..40 .. cycles.Length ] |> List.map (minus 1)
 
     let result = checkpoints |> List.map (signalStrength cycles) |> List.sum
 
@@ -73,10 +74,7 @@ let part2 input =
 
     let instructions = parse input |> asInstructions
 
-    let cycles =
-        instructions
-        |> List.fold updateState initialState
-        |> List.mapi (fun i x -> (i, x))
+    let cycles = instructions |> executeWith initialState
 
     let result = cycles |> Seq.fold render screen
 

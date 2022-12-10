@@ -8,6 +8,8 @@ let split (separators: string) (x: string) = x.Split(separators) |> List.ofArray
 
 let flatten x = x |> List.reduce List.append
 
+let minus a b = b - a
+
 let replace i v (m: char[]) =
     seq {
         for x in [ 0 .. m.GetLength(0) - 1 ] do
